@@ -1,72 +1,97 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Blah;
+using Messaging;
+using Microsoft.Extensions.Logging;
 using Serilog;
-using Serilog.Core;
-using Serilog.Events;
+using Serilog.Filters;
 using Unity;
-using Unity.Injection;
-using Unity.Lifetime;
+using Unity.Microsoft.Logging;
 
-namespace ConsoleApp21
+namespace LoggingSample
 {
-    class Program
-    {text-logging-unity-full-framewo
+    class Program {
         private static readonly IUnityContainer Container = new UnityContainer();
 
         static void Main(string[] args)
         {
             Container.RegisterType<IBlahService, BlahService>();
-
-
-
-            // instantiate and configure logging. Using serilog here, to log to console and a text-file.
-            var loggerFactory = new Microsoft.Extensions.Logging.LoggerFactory();
-            var loggerConfig = new LoggerConfiguration()
-                    .Enrich.FromLogContext()
-                    .WriteTo.Console(outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level}] [{SourceContext}] {Message}{NewLine}{Exception}")
-                    .CreateLogger();
-            loggerFactory.AddSerilog(loggerConfig);
-
-
-
-
-            Container.RegisterFactory<Microsoft.ExtILogger>(factory =>
-            {
-                ILogger log = new LoggerConfiguration()
-                    .Enrich.FromLogContext()
-                    .WriteTo.Console(outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level}] [{SourceContext}] {Message}{NewLine}{Exception}")
-                    .CreateLogger();
-                return log;
-            }, new ContainerControlledLifetimeManager());
+            Container.RegisterType<ISimpleMessageLogService, SimpleMessageLogService>();
+            RegisterLogging();
 
             var blahService = Container.Resolve<IBlahService>();
-            blahService.BlahMethod();
+            blahService.Blah();
 
+            var simpleMessageService = Container.Resolve<ISimpleMessageLogService>();
+            simpleMessageService.Message();
 
             Console.ReadKey();
         }
+
+        private static void RegisterLogging()
+        {
+            var loggerFactory = new Microsoft.Extensions.Logging.LoggerFactory();
+            var loggerConfig = new LoggerConfiguration()
+                .Enrich.FromLogContext()
+                .WriteTo.Logger(l => l.
+                    Filter.ByIncludingOnly(Matching.FromSource("Blah"))
+                    .WriteTo.Console( outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level}] [{SourceContext}] {Message}{NewLine}{Exception}"))
+                .WriteTo.Logger(l => l.
+                    Filter.ByIncludingOnly(Matching.FromSource("Messaging"))
+                    .WriteTo.Console( outputTemplate: "{Message}"))
+                .CreateLogger();
+
+            loggerFactory.AddSerilog(loggerConfig);
+
+            Container.AddExtension(new LoggingExtension(loggerFactory));
+        }
+    }
+
+
+
+}
+
+namespace Blah
+{
+    public interface IBlahService
+    {
+        void Blah();
     }
 
     public class BlahService : IBlahService
     {
-        private readonly ILogger _logger;
+        private readonly ILogger<BlahService> _logger;
 
-        public BlahService(ILogger logger)
+        public BlahService(ILogger<BlahService> logger)
         {
-            _logger = logger.ForContext<BlahService>();
+            _logger = logger;
         }
 
-        public void BlahMethod()
+        public void Blah()
         {
-            _logger.Information("Blah method");
+            _logger.LogInformation("Blah called");
         }
     }
+}
 
-    public interface IBlahService
+namespace Messaging
+{
+    public interface ISimpleMessageLogService
     {
-        void BlahMethod();
+        void Message();
+    }
+
+    public class SimpleMessageLogService : ISimpleMessageLogService
+    {
+        private readonly ILogger<SimpleMessageLogService> _logger;
+
+        public SimpleMessageLogService(ILogger<SimpleMessageLogService> logger)
+        {
+            _logger = logger;
+        }
+
+        public void Message()
+        {
+            _logger.LogInformation("Just a message");
+        }
     }
 }
