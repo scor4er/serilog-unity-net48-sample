@@ -4,9 +4,9 @@ namespace LoggingSample.Blah
 {
     public class BlahService : IBlahService
     {
-        private readonly ILogger<BlahService> _logger;
+        private readonly ILogger _logger;
 
-        public BlahService(ILogger<BlahService> logger)
+        public BlahService(ILogger logger)
         {
             _logger = logger;
         }

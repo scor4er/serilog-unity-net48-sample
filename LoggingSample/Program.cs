@@ -1,7 +1,6 @@
 ﻿using System;
 using LoggingSample.Blah;
 using LoggingSample.Messaging;
-using Messaging;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Filters;
@@ -17,13 +16,13 @@ namespace LoggingSample
         private static void Main(string[] args)
         {
             Container.RegisterType<IBlahService, BlahService>();
-            Container.RegisterType<ISimpleMessageLogService, SimpleMessageLogService>();
+            Container.RegisterType<ISimpleMessageService, SimpleMessageService>();
             RegisterLogging();
 
             var blahService = Container.Resolve<IBlahService>();
             blahService.Blah();
 
-            var simpleMessageService = Container.Resolve<ISimpleMessageLogService>();
+            var simpleMessageService = Container.Resolve<ISimpleMessageService>();
             simpleMessageService.Message();
 
             Console.ReadKey();
