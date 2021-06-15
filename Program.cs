@@ -9,10 +9,11 @@ using Unity.Microsoft.Logging;
 
 namespace LoggingSample
 {
-    class Program {
+    internal class Program
+    {
         private static readonly IUnityContainer Container = new UnityContainer();
 
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             Container.RegisterType<IBlahService, BlahService>();
             Container.RegisterType<ISimpleMessageLogService, SimpleMessageLogService>();
@@ -29,15 +30,15 @@ namespace LoggingSample
 
         private static void RegisterLogging()
         {
-            var loggerFactory = new Microsoft.Extensions.Logging.LoggerFactory();
+            var loggerFactory = new LoggerFactory();
             var loggerConfig = new LoggerConfiguration()
                 .Enrich.FromLogContext()
-                .WriteTo.Logger(l => l.
-                    Filter.ByIncludingOnly(Matching.FromSource("Blah"))
-                    .WriteTo.Console( outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level}] [{SourceContext}] {Message}{NewLine}{Exception}"))
-                .WriteTo.Logger(l => l.
-                    Filter.ByIncludingOnly(Matching.FromSource("Messaging"))
-                    .WriteTo.Console( outputTemplate: "{Message}"))
+                .WriteTo.Logger(l => l.Filter.ByIncludingOnly(Matching.FromSource("Blah"))
+                    .WriteTo.Console(
+                        outputTemplate:
+                        "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level}] [{SourceContext}] {Message}{NewLine}{Exception}"))
+                .WriteTo.Logger(l => l.Filter.ByIncludingOnly(Matching.FromSource("Messaging"))
+                    .WriteTo.Console(outputTemplate: "{Message}"))
                 .CreateLogger();
 
             loggerFactory.AddSerilog(loggerConfig);
@@ -45,9 +46,6 @@ namespace LoggingSample
             Container.AddExtension(new LoggingExtension(loggerFactory));
         }
     }
-
-
-
 }
 
 namespace Blah
